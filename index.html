@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#fff4d8">
+<title>Fruit Pop — Merge Game</title>
+<style>
+:root{--bg:#fff4d8;--ink:#382b45;--pink:#ff6f91;--purple:#6b4eff;--card:#fffdf7;--line:#f0dcae}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at top,#fffdf6,var(--bg));font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);min-height:100vh;display:flex;justify-content:center}
+.app{width:min(100%,520px);padding:16px 14px 28px}
+header{text-align:center;padding:6px 0 12px}
+.logo{font-size:12px;letter-spacing:3px;font-weight:900;color:#9b6a22}
+h1{margin:3px 0;font-size:32px;line-height:1.1}
+.subtitle{font-size:13px;opacity:.75}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:10px 7px;text-align:center;box-shadow:0 3px 0 #f2e3bd}
+.stat small{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1px;opacity:.65;font-weight:800}
+.stat strong{display:block;font-size:20px;margin-top:2px}
+.panel{background:#fffdf8;border:2px solid var(--line);border-radius:22px;padding:12px;box-shadow:0 6px 0 #ead8ab}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px;font-size:12px;font-weight:800}
+.pill{border-radius:999px;background:#f6ebff;padding:6px 9px;color:#6846cb}
+#board{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;touch-action:manipulation}
+.cell{aspect-ratio:1;border-radius:15px;background:#f7e9c8;border:1px solid #eedbb2;display:flex;align-items:center;justify-content:center;font-size:clamp(28px,8vw,43px);position:relative;user-select:none;transition:transform .08s}
+.cell:active{transform:scale(.95)}
+.cell.filled{background:linear-gradient(145deg,#fff9e8,#f8e4b5);box-shadow:inset 0 -3px 0 #ead5a2}
+.cell.selected{outline:3px solid var(--purple);outline-offset:-3px}
+.cell .lv{position:absolute;right:5px;bottom:3px;font-size:9px;font-weight:900;opacity:.6}
+.controls{display:flex;gap:8px;margin-top:11px}
+button{border:0;border-radius:13px;padding:12px 13px;font:inherit;font-size:13px;font-weight:850;cursor:pointer}
+.primary{background:var(--purple);color:white;flex:1;box-shadow:0 4px 0 #4a31bf}
+.secondary{background:#ffe4eb;color:#a52e54}
+button:active{transform:translateY(2px);box-shadow:none}
+.message{min-height:36px;padding:10px 4px 2px;font-size:12px;text-align:center;font-weight:700;color:#745e30}
+.how{margin-top:13px;background:#fffdf8;border:1px solid var(--line);border-radius:17px;padding:13px;font-size:12px;line-height:1.55}
+.how h2{font-size:14px;margin:0 0 5px}
+.how p{margin:4px 0}
+footer{text-align:center;font-size:10px;opacity:.6;margin-top:12px}
+.modalback{position:fixed;inset:0;background:#2a203b99;display:none;align-items:center;justify-content:center;padding:18px}
+.modal{max-width:360px;background:#fffdf7;border-radius:22px;padding:20px;text-align:center;border:2px solid var(--line)}
+.modal h2{margin:0 0 8px}
+.modal p{font-size:13px;line-height:1.5}
+@media(min-width:420px){.app{padding-top:22px}#board{gap:9px}.cell{border-radius:17px}}
+</style>
+</head>
+<body>
+<main class="app">
+<header>
+<div class="logo">MINI GAME STUDIO</div>
+<h1>🍉 Fruit Pop</h1>
+<div class="subtitle">Gabungkan buah. Pecahkan rekor. Main gratis!</div>
+</header>
+<section class="stats">
+<div class="stat"><small>Skor</small><strong id="score">0</strong></div>
+<div class="stat"><small>Rekor</small><strong id="best">0</strong></div>
+<div class="stat"><small>Buah berikut</small><strong id="next">🍒</strong></div>
+</section>
+<section class="panel">
+<div class="topline"><span>👆 Ketuk kotak kosong untuk taruh buah</span><span class="pill" id="moves">0 langkah</span></div>
+<div id="board" aria-label="Papan permainan"></div>
+<div class="controls">
+<button class="primary" id="new">↻ Game baru</button>
+<button class="secondary" id="help">Cara main</button>
+</div>
+<div class="message" id="message">Gabungkan 3 buah sama yang saling berdekatan!</div>
+</section>
+<section class="how">
+<h2>🍓 Cara main</h2>
+<p>1. Ketuk kotak kosong untuk menaruh buah berikutnya.</p>
+<p>2. Tiga atau lebih buah yang sama dan saling bersentuhan akan bergabung jadi buah level berikutnya.</p>
+<p>3. Rencanakan langkahmu — papan penuh berarti game selesai. Bisa dapat skor tertinggi berapa?</p>
+</section>
+<footer>Versi demo gratis • Tidak ada uang asli atau hadiah tunai di dalam game.</footer>
+</main>
+<div class="modalback" id="modalback"><div class="modal"><h2>🍒 Cara main</h2><p>Ketuk kotak kosong. Kalau ada 3+ buah identik yang saling bersentuhan secara horizontal atau vertikal, buah-buah itu bergabung menjadi satu buah level lebih tinggi. Buat kombo untuk skor besar!</p><button class="primary" id="close">Siap main!</button></div></div>
+<script>
+const fruits=['🍒','🍓','🍊','🍋','🍐','🍎','🍑','🍍','🍉'];
+const W=5,H=6,N=W*H;
+let cells=Array(N).fill(0),score=0,moves=0,next=1,selected=-1,ended=false;
+const board=document.getElementById('board');
+const scoreEl=document.getElementById('score'),bestEl=document.getElementById('best'),nextEl=document.getElementById('next'),movesEl=document.getElementById('moves'),message=document.getElementById('message');
+let best=0;try{best=Number(localStorage.getItem('fruitpop_best')||0)}catch(e){}
+bestEl.textContent=best;
+function randFruit(){return Math.random()<.72?1:Math.min(3,Math.floor(Math.random()*3)+1)}
+function updateStats(){scoreEl.textContent=score;bestEl.textContent=best;nextEl.textContent=fruits[next-1]||'👑';movesEl.textContent=moves+' langkah'}
+function render(){
+ board.innerHTML='';
+ cells.forEach((v,i)=>{let d=document.createElement('button');d.className='cell'+(v?' filled':'')+(selected===i?' selected':'');d.setAttribute('aria-label',v?fruits[Math.min(v,9)-1]:'Kotak kosong');d.innerHTML=v?`${fruits[Math.min(v,9)-1]}<span class="lv">${v}</span>`:'';d.onclick=()=>tap(i);board.appendChild(d)});
+ updateStats();
+}
+function neighbors(i){let x=i%W,y=Math.floor(i/W),a=[];if(x>0)a.push(i-1);if(x<W-1)a.push(i+1);if(y>0)a.push(i-W);if(y<H-1)a.push(i+W);return a}
+function flood(start,v){let seen=new Set([start]),q=[start];while(q.length){let i=q.shift();for(const j of neighbors(i)){if(!seen.has(j)&&cells[j]===v){seen.add(j);q.push(j)}}}return [...seen]}
+function resolve(start){
+ let changed=true,at=start;
+ while(changed){changed=false;let v=cells[at];if(!v)break;let group=flood(at,v);if(group.length>=3){group.forEach(i=>cells[i]=0);let dest=group.includes(at)?at:group[0];cells[dest]=Math.min(9,v+1);score+=group.length*10*(v);at=dest;changed=true;message.textContent=`Combo! ${group.length} buah bergabung jadi ${fruits[Math.min(v+1,9)-1]} +${group.length*10*v} skor`;}}
+}
+function tap(i){
+ if(ended)return;
+ if(cells[i]){selected=selected===i?-1:i;message.textContent='Kotak itu sudah terisi. Pilih kotak kosong.';render();return}
+ cells[i]=next;let placed=i;moves++;selected=-1;resolve(placed);next=randFruit();
+ if(score>best){best=score;try{localStorage.setItem('fruitpop_best',best)}catch(e){}}
+ if(cells.every(v=>v!==0)){ended=true;message.textContent=`Papan penuh! Skor akhir ${score}. Tekan Game baru untuk main lagi.`}
+ else if(!message.textContent.startsWith('Combo!'))message.textContent='Bagus! Cari 3 buah sama yang saling bersentuhan.';
+ render();
+}
+function reset(){cells=Array(N).fill(0);score=0;moves=0;next=randFruit();selected=-1;ended=false;message.textContent='Gabungkan 3 buah sama yang saling berdekatan!';render()}
+document.getElementById('new').onclick=reset;
+document.getElementById('help').onclick=()=>document.getElementById('modalback').style.display='flex';
+document.getElementById('close').onclick=()=>document.getElementById('modalback').style.display='none';
+document.getElementById('modalback').onclick=e=>{if(e.target.id==='modalback')e.currentTarget.style.display='none'};
+reset();
+</script>
+</body>
+</html>
